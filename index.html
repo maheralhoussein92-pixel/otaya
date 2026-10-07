@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1128">
+<title>أوتايا - معلمك أقرب إليك</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b1128;--card:#141d40;--line:#26315f;--text:#f2f3f8;--mute:#9aa3c7;--gold:#f5b301;--ok:#2fbf71}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--text);font-family:Cairo,Tahoma,Arial,sans-serif;font-size:17px;line-height:1.6;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:520px;margin:0 auto;padding:18px 18px 40px}
+.view{display:none}.view.on{display:block}
+h2{font-size:23px;font-weight:800;margin-bottom:12px}
+.home{min-height:82vh;display:flex;flex-direction:column;justify-content:center;text-align:center}
+.home h1{font-size:42px;font-weight:800;color:var(--gold);line-height:1.2}
+.sub{color:var(--mute);margin:4px 0 24px}
+button,select,input{font:inherit}
+.btn{display:block;width:100%;padding:14px;border:0;border-radius:10px;background:var(--gold);color:#1a1400;font-weight:800;font-size:18px;cursor:pointer;text-align:center}
+.btn.alt{background:transparent;color:var(--text);border:1.5px solid var(--line);margin-top:10px}
+.btn:disabled{opacity:.6}
+.back{background:none;border:0;color:var(--mute);padding:6px 0;margin-bottom:8px;cursor:pointer;font-size:16px}
+label{display:block;margin:12px 0 5px;color:var(--mute);font-size:15px}
+select,input{width:100%;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--text)}
+select:focus,input:focus,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.hint{font-size:14px;color:var(--mute);margin-top:5px}
+.list{margin-top:16px;display:grid;gap:12px}
+.w{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.w b{font-size:19px}
+.m{color:var(--mute);font-size:15px}
+.rating{color:var(--gold);font-size:15px;margin:2px 0 10px}
+.badge{display:inline-block;margin-inline-start:8px;padding:0 9px;border-radius:99px;background:rgba(47,191,113,.15);color:var(--ok);font-size:13px;font-weight:600}
+.badge.off{background:rgba(154,163,199,.15);color:var(--mute)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.act{flex:1;min-width:90px;padding:10px;border-radius:9px;text-align:center;text-decoration:none;font-weight:600;border:1.5px solid var(--line);color:var(--text);background:none;cursor:pointer;font-size:15px}
+.act.wa{background:#1faa59;border-color:#1faa59;color:#fff}
+.act.on{background:var(--gold);border-color:var(--gold);color:#1a1400}
+.act.del{color:#ff8a8a}
+.empty,.msg{margin-top:14px;padding:13px;border-radius:10px;background:var(--card);color:var(--mute);text-align:center}
+.msg.ok{color:var(--ok)}.msg.err{color:#ff8a8a}
+.demo{background:#3a2d00;color:#ffd666;font-size:14px;padding:8px 14px;text-align:center}
+.rate{margin-top:8px}
+.stars{display:flex;gap:4px}
+.star{background:none;border:0;font-size:32px;line-height:1;color:var(--gold);cursor:pointer;padding:0 2px}
+.ph{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 4px}
+.ph img{width:100%;height:96px;object-fit:cover;border-radius:8px}
+.stat{font-size:30px;font-weight:800;color:var(--gold);line-height:1.2}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.chips .act{flex:none;min-width:0;padding:4px 11px;font-size:14px}
+.foot{text-align:center;margin-top:26px}
+.foot button{background:none;border:0;color:var(--mute);font-size:13px;cursor:pointer}
+@media (prefers-reduced-motion:no-preference){.view.on{animation:in .25s ease}@keyframes in{from{opacity:0}to{opacity:1}}}
+</style>
+</head>
+<body>
+<div id="demo" class="demo" hidden>وضع تجريبي: البيانات محفوظة على هذا الجهاز فقط</div>
+<main>
+
+<section id="home" class="view on home">
+  <svg viewBox="0 0 120 90" width="120" height="90" style="align-self:center;margin-bottom:8px" role="img" aria-label="عامل بخوذة">
+    <rect x="22" y="62" width="76" height="28" rx="12" fill="#26315f"/>
+    <circle cx="60" cy="42" r="18" fill="#e0b08a"/>
+    <path d="M40 38 A20 20 0 0 1 80 38 Z" fill="#f5b301"/>
+    <rect x="34" y="36" width="52" height="5" rx="2.5" fill="#f5b301"/>
+    <rect x="56" y="22" width="8" height="10" rx="2" fill="#d99a00"/>
+  </svg>
+  <h1>أوتايا</h1>
+  <p class="sub">معلمك أقرب إليك. سباك، كهربجي، نجار، بلاط، حداد، وكل المهن.</p>
+  <button class="btn" data-go="find">ابدأ الآن</button>
+  <button class="btn alt" data-go="reg">سجّل كعامل</button>
+  <button id="bme" class="btn alt" data-go="me" hidden>لوحتي</button>
+  <div class="foot"><button id="badm">إدارة</button></div>
+</section>
+
+<section id="find" class="view">
+  <button class="back" data-go="home">رجوع</button>
+  <h2>ابحث عن معلم</h2>
+  <label for="fj">المهنة</label><select id="fj"></select>
+  <label for="fp">المحافظة</label><select id="fp"></select>
+  <label for="fa">المنطقة</label><select id="fa"></select>
+  <button id="ff" class="btn alt">المفضلة فقط</button>
+  <div id="res" class="list"></div>
+</section>
+
+<section id="det" class="view">
+  <button class="back" data-go="find">رجوع</button>
+  <div id="dt"></div>
+</section>
+
+<section id="reg" class="view">
+  <button class="back" data-go="home">رجوع</button>
+  <h2>سجّل كعامل</h2>
+  <label for="rn">الاسم</label><input id="rn" autocomplete="name" maxlength="40">
+  <label for="rj">المهنة</label><select id="rj"></select>
+  <label for="rp">المحافظة</label><select id="rp"></select>
+  <label for="ra">المنطقة</label><select id="ra"></select>
+  <label for="rt">رقم الواتساب</label>
+  <input id="rt" type="tel" inputmode="tel" placeholder="09xxxxxxxx" dir="ltr" style="text-align:right">
+  <label for="rf">صور من شغلك (حتى 3)</label>
+  <input id="rf" type="file" accept="image/*" multiple>
+  <p class="hint">رقمك وصورك رح تظهر للزبائن اللي بيدوروا على مهنتك ومنطقتك.</p>
+  <div style="height:14px"></div>
+  <button id="rs" class="btn">سجّل</button>
+  <div id="rm"></div>
+</section>
+
+<section id="me" class="view">
+  <button class="back" data-go="home">رجوع</button>
+  <h2>لوحتي</h2>
+  <div id="mb"></div>
+</section>
+
+<section id="adm" class="view">
+  <button class="back" data-go="home">رجوع</button>
+  <h2>الإدارة</h2>
+  <div id="ab"></div>
+</section>
+
+</main>
+<script>
+/* الإعدادات: عدّلها قبل ما ترفع الملف */
+const FIREBASE = { projectId: "", apiKey: "" };
+const ADMIN_PIN = "";      /* رمز الدخول لشاشة الإدارة */
+const ADMIN_WA = "";       /* رقمك للواتساب بصيغة 9639xxxxxxxx */
+const SHAM_NUMBER = "";    /* رقم حسابك على الشام كاش */
+
+const JOBS = ["سباك (صحية)","كهربجي","نجار","نجار موبيلية","نجار باطون","حداد","بلاط","ملاس (قصارة)","طيان","معمرجي","دهّان","جبّاس (ديكور جبصين)","عازل (عزل أسطح ومياه)","عامل ألمنيوم وزجاج","مصلح غسالات","مصلح برادات","مصلح مكيفات","مصلح سخانات وغاز","مصلح مدافئ","فني ستلايت وانترنت","فني كمبيوتر وموبايل","منجّد","فني ستائر","فني أقفال ومفاتيح","فني تركيب مطابخ","عامل نقل عفش","عامل تنظيف","ميكانيكي سيارات","كهربجي سيارات","مهنة أخرى"];
+const AREAS = {
+  "دمشق": ["المزة","المالكي","أبو رمانة","كفرسوسة","الميدان","القصاع","باب توما","ركن الدين","المهاجرين","البرامكة","الشعلان","الصالحية","العدوي","القنوات","الجورة","الشاغور","القدم","العسالي","التضامن","اليرموك","برزة","القابون","جوبر","دمر","الزاهرة","الميسات","الروضة","الحمراء","الجسر الأبيض","باب سريجة","منطقة أخرى"],
+  "ريف دمشق": ["جرمانا","دوما","داريا","المعضمية","صحنايا","أشرفية صحنايا","جديدة عرطوز","قدسيا","الهامة","التل","حرستا","عربين","سقبا","كفربطنا","حمورية","زملكا","جسرين","يلدا","ببيلا","بيت سحم","قطنا","الكسوة","الزبداني","مضايا","بلودان","يبرود","النبك","صيدنايا","معلولا","السيدة زينب","منطقة أخرى"]
+};
+
+const $ = id => document.getElementById(id);
+const live = !!(FIREBASE.projectId && FIREBASE.apiKey);
+if (!live) $("demo").hidden = false;
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch(e){ return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const digits = s => s.replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g, "");
+const intl = p => { p = digits(p); if (p.startsWith("00")) p = p.slice(2); if (p.startsWith("0")) p = "963" + p.slice(1); return p; };
+function el(tag, props = {}, kids = []){ const e = document.createElement(tag); Object.assign(e, props); kids.forEach(k => e.append(k)); return e; }
+const msg = (t, c = "") => el("div", { className: "msg " + c, textContent: t });
+const norm = w => ({ sum:0, count:0, clicks:0, available:true, verified:false, paidUntil:0, photos:"[]", province:"", ...w });
+const score = w => (w.sum + 10.5) / (w.count + 3);
+
+/* ===== التخزين ===== */
+const BASE = live ? `https://firestore.googleapis.com/v1/projects/${FIREBASE.projectId}/databases/(default)/documents` : "";
+const enc = v => typeof v === "boolean" ? { booleanValue: v } : typeof v === "number" ? { integerValue: String(Math.round(v)) } : { stringValue: String(v) };
+const dec = f => { const o = {}; for (const k in f){ const x = f[k]; o[k] = "integerValue" in x ? +x.integerValue : "booleanValue" in x ? x.booleanValue : x.stringValue; } return o; };
+async function fs(path, method, body, mask){
+  let url = `${BASE}/${path}`;
+  const q = (mask ? mask.map(m => "updateMask.fieldPaths=" + m).join("&") + "&" : "") + "key=" + FIREBASE.apiKey;
+  url += (url.includes("?") ? "&" : "?") + q;
+  const init = { method, headers: { "Content-Type": "application/json" } };
+  if (body) init.body = JSON.stringify({ fields: Object.fromEntries(Object.entries(body).map(([k, v]) => [k, enc(v)])) });
+  const r = await fetch(url, init);
+  if (!r.ok) throw new Error(r.status);
+  return method === "DELETE" ? null : r.json();
+}
+const LIST_FIELDS = ["name","job","province","area","phone","verified","sum","count","clicks","available","paidUntil"];
+async function dbList(){
+  if (!live) return (LS.get("ow") || []).map(norm);
+  const j = await fs("workers?pageSize=300&" + LIST_FIELDS.map(f => "mask.fieldPaths=" + f).join("&"), "GET");
+  return (j.documents || []).map(d => norm({ id: d.name.split("/").pop(), ...dec(d.fields || {}) }));
+}
+async function dbPhotos(id){
+  try {
+    if (!live) return JSON.parse(((LS.get("ow") || []).find(w => w.id === id) || {}).photos || "[]");
+    const j = await fs("workers/" + id, "GET");
+    return JSON.parse(dec(j.fields || {}).photos || "[]");
+  } catch(e){ return []; }
+}
+async function dbAdd(w){
+  if (!live){ const a = LS.get("ow") || []; const id = Date.now().toString(36); a.push({ id, ...w }); LS.set("ow", a); return id; }
+  const j = await fs("workers", "POST", w);
+  return j.name.split("/").pop();
+}
+async function dbSet(id, patch){
+  if (!live){ const a = LS.get("ow") || []; const x = a.find(w => w.id === id); if (x) Object.assign(x, patch); LS.set("ow", a); return; }
+  await fs("workers/" + id, "PATCH", patch, Object.keys(patch));
+}
+async function dbDel(id){
+  if (!live){ LS.set("ow", (LS.get("ow") || []).filter(w => w.id !== id)); return; }
+  await fs("workers/" + id, "DELETE");
+}
+async function getPaid(){
+  if (!live) return LS.get("op") || [];
+  try { const j = await fs("config/areas", "GET"); return (dec(j.fields || {}).paid || "").split("|").filter(Boolean); }
+  catch(e){ return []; }
+}
+async function setPaid(arr){
+  if (!live){ LS.set("op", arr); return; }
+  await fs("config/areas", "PATCH", { paid: arr.join("|") }, ["paid"]);
+}
+
+/* ===== القوائم ===== */
+function fill(sel, items, all){
+  sel.innerHTML = "";
+  if (all) sel.add(new Option(all, ""));
+  items.forEach(v => sel.add(new Option(v, v)));
+}
+function areaOpts(selP, selA, all){
+  const p = selP.value;
+  fill(selA, p ? AREAS[p] : [...AREAS["دمشق"], ...AREAS["ريف دمشق"]], all);
+}
+fill($("fj"), JOBS, "كل المهن");
+fill($("fp"), Object.keys(AREAS), "دمشق وريفها"); areaOpts($("fp"), $("fa"), "كل المناطق");
+fill($("rj"), JOBS);
+fill($("rp"), Object.keys(AREAS)); areaOpts($("rp"), $("ra"));
+$("fp").onchange = () => { areaOpts($("fp"), $("fa"), "كل المناطق"); search(); };
+$("rp").onchange = () => areaOpts($("rp"), $("ra"));
+$("fj").onchange = $("fa").onchange = search;
+
+function go(id){
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === id));
+  window.scrollTo(0, 0);
+  if (id === "home") $("bme").hidden = !LS.get("om");
+  if (id === "find") search();
+  if (id === "me") showMe();
+}
+document.querySelectorAll("[data-go]").forEach(b => b.onclick = () => go(b.dataset.go));
+go("home");
+
+/* ===== بطاقة المعلم ===== */
+function card(w, full){
+  const rate = el("div", { className: "rate" });
+  const showRate = () => {
+    if ((LS.get("or") || []).includes(w.id)){ rate.replaceChildren(el("div", { className: "hint", textContent: "شكراً، تم تقييمك." })); return; }
+    if (!(LS.get("oc") || []).includes(w.id)){ rate.replaceChildren(); return; }
+    const row = el("div", { className: "stars" });
+    for (let n = 1; n <= 5; n++) row.append(el("button", { className: "star", textContent: "★", title: n + " من 5", onclick: async () => {
+      try {
+        await dbSet(w.id, { sum: w.sum + n, count: w.count + 1 });
+        const r = LS.get("or") || []; r.push(w.id); LS.set("or", r); showRate();
+      } catch(e){ rate.append(msg("ما تم التقييم. جرب مرة ثانية.", "err")); }
+    } }));
+    rate.replaceChildren(el("div", { className: "hint", textContent: "كيف كان الشغل؟ قيّم المعلم:" }), row);
+  };
+  const contact = () => {
+    const c = LS.get("oc") || [];
+    if (!c.includes(w.id)){ c.push(w.id); LS.set("oc", c); dbSet(w.id, { clicks: w.clicks + 1 }).catch(() => {}); }
+    showRate();
+  };
+  const title = el("b", { textContent: w.name });
+  if (w.verified) title.append(el("span", { className: "badge", textContent: "موثّق" }));
+  title.append(el("span", { className: "badge" + (w.available ? "" : " off"), textContent: w.available ? "متاح الآن" : "غير متاح" }));
+  const heart = el("button", { className: "act" });
+  const paintHeart = () => { heart.textContent = (LS.get("of") || []).includes(w.id) ? "♥ بالمفضلة" : "♡ أضف للمفضلة"; };
+  heart.onclick = () => {
+    const f = LS.get("of") || [], i = f.indexOf(w.id);
+    if (i < 0) f.push(w.id); else f.splice(i, 1);
+    LS.set("of", f); paintHeart();
+  };
+  paintHeart();
+  const kids = [
+    title,
+    el("div", { className: "m", textContent: `${w.job} · ${w.area}` }),
+    el("div", { className: "rating", textContent: w.count ? `★ ${(w.sum / w.count).toFixed(1)} (${w.count})` : "جديد" })
+  ];
+  if (full){
+    const ph = el("div", { className: "ph" });
+    kids.push(ph);
+    dbPhotos(w.id).then(a => ph.replaceChildren(...a.map(s => el("img", { src: s, alt: "من شغل " + w.name }))));
+  }
+  kids.push(el("div", { className: "row" }, [
+    el("a", { className: "act", href: "tel:+" + intl(w.phone), textContent: "اتصال", onclick: contact }),
+    el("a", { className: "act wa", href: "https://wa.me/" + intl(w.phone), target: "_blank", rel: "noopener", textContent: "واتساب", onclick: contact })
+  ]));
+  const r2 = el("div", { className: "row" }, [heart]);
+  if (!full) r2.append(el("button", { className: "act", textContent: "صفحة المعلم", onclick: () => { $("dt").replaceChildren(card(w, true)); go("det"); } }));
+  kids.push(r2, rate);
+  showRate();
+  return el("div", { className: "w" }, kids);
+}
+
+/* ===== البحث ===== */
+const FAV = { on: false };
+$("ff").onclick = () => { FAV.on = !FAV.on; $("ff").textContent = FAV.on ? "كل المعلمين" : "المفضلة فقط"; search(); };
+async function search(){
+  const box = $("res");
+  box.replaceChildren(el("div", { className: "empty", textContent: "عم نحمّل..." }));
+  let all, paid;
+  try { [all, paid] = await Promise.all([dbList(), getPaid()]); }
+  catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل القائمة. تأكد من الإنترنت وجرب مرة ثانية.", "err")); return; }
+  const job = $("fj").value, pr = $("fp").value, ar = $("fa").value, favs = LS.get("of") || [], now = Date.now();
+  const hits = all.filter(w => (!job || w.job === job) && (!pr || w.province === pr) && (!ar || w.area === ar)
+      && !(paid.includes(w.area) && w.paidUntil < now) && (!FAV.on || favs.includes(w.id)))
+    .sort((a, b) => (b.verified - a.verified) || (b.available - a.available) || (score(b) - score(a)));
+  if (!hits.length){ box.replaceChildren(el("div", { className: "empty", textContent: "لسا ما في معلمين هون. جرب مهنة أو منطقة ثانية." })); return; }
+  box.replaceChildren(...hits.map(w => card(w, false)));
+}
+
+/* ===== التسجيل ===== */
+function shrink(file){
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => {
+      const i = new Image();
+      i.onload = () => {
+        const s = Math.min(1, 420 / Math.max(i.width, i.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(i.width * s); c.height = Math.round(i.height * s);
+        c.getContext("2d").drawImage(i, 0, 0, c.width, c.height);
+        res(c.toDataURL("image/jpeg", 0.55));
+      };
+      i.onerror = () => res("");
+      i.src = r.result;
+    };
+    r.onerror = () => res("");
+    r.readAsDataURL(file);
+  });
+}
+$("rs").onclick = async () => {
+  const rm = $("rm"), btn = $("rs");
+  const w = { name: $("rn").value.trim(), job: $("rj").value, province: $("rp").value, area: $("ra").value, phone: digits($("rt").value) };
+  if (w.name.length < 2){ rm.replaceChildren(msg("اكتب اسمك.", "err")); return; }
+  if (w.phone.length < 9){ rm.replaceChildren(msg("رقم الواتساب غير صحيح.", "err")); return; }
+  btn.disabled = true;
+  try {
+    const ph = (await Promise.all([...$("rf").files].slice(0, 3).map(shrink))).filter(Boolean);
+    const id = await dbAdd({ ...w, verified: false, sum: 0, count: 0, clicks: 0, available: true, paidUntil: 0, photos: JSON.stringify(ph) });
+    LS.set("om", id);
+    rm.replaceChildren(msg("تم التسجيل. رح يظهر اسمك للزبائن، ولوحتك صارت جاهزة.", "ok"));
+    $("rn").value = ""; $("rt").value = ""; $("rf").value = "";
+  } catch(e){ rm.replaceChildren(msg("ما تم التسجيل. جرب مرة ثانية.", "err")); }
+  btn.disabled = false;
+};
+
+/* ===== لوحة العامل ===== */
+async function showMe(){
+  const box = $("mb"), id = LS.get("om");
+  if (!id){ box.replaceChildren(msg("سجّل كعامل أول لتظهر لوحتك هنا.")); return; }
+  box.replaceChildren(msg("عم نحمّل..."));
+  let w, paid;
+  try { const [all, p] = await Promise.all([dbList(), getPaid()]); w = all.find(x => x.id === id); paid = p; }
+  catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل لوحتك.", "err")); return; }
+  if (!w){ box.replaceChildren(msg("ما لقينا حسابك. ممكن انحذف، سجّل من جديد.", "err")); return; }
+  const now = Date.now();
+  const sub = w.paidUntil > now ? `اشتراكك ينتهي بعد ${Math.ceil((w.paidUntil - now) / 864e5)} يوم`
+    : paid.includes(w.area) ? "الاشتراك مطلوب بمنطقتك ليظهر اسمك للزبائن" : "منطقتك مجانية حالياً";
+  const out = [
+    el("div", { className: "w" }, [el("b", { textContent: w.name }), el("div", { className: "m", textContent: `${w.job} · ${w.area}` })]),
+    el("button", { className: "btn", textContent: w.available ? "أنا متاح الآن (اضغط لتغيّر)" : "أنا غير متاح (اضغط لتغيّر)", onclick: async () => { await dbSet(w.id, { available: !w.available }).catch(() => {}); showMe(); } }),
+    el("div", { className: "w", style: "margin-top:12px" }, [
+      el("div", { className: "m", textContent: "هالشهر زبائن ضغطوا على رقمك" }),
+      el("div", { className: "stat", textContent: String(w.clicks) }),
+      el("div", { className: "rating", textContent: w.count ? `التقييم ★ ${(w.sum / w.count).toFixed(1)} (${w.count})` : "التقييم: جديد" })
+    ]),
+    el("div", { className: "w", style: "margin-top:12px" }, [
+      el("b", { textContent: "الاشتراك" }),
+      el("div", { className: "m", textContent: sub }),
+      el("div", { className: "hint", textContent: SHAM_NUMBER ? `للتجديد حوّل عبر الشام كاش إلى: ${SHAM_NUMBER}، وبعدين أرسل الإيصال.` : "تفاصيل الدفع رح يرسلها لك فريق أوتايا." })
+    ])
+  ];
+  if (ADMIN_WA) out.push(el("a", { className: "btn alt", style: "text-decoration:none", href: "https://wa.me/" + ADMIN_WA + "?text=" + encodeURIComponent(`مرحبا، هاد إيصال اشتراك أوتايا. الاسم: ${w.name} - ${w.area}`), target: "_blank", rel: "noopener", textContent: "أرسل الإيصال على واتساب" }));
+  box.replaceChildren(...out);
+}
+
+/* ===== الإدارة ===== */
+$("badm").onclick = () => {
+  if (!ADMIN_PIN){ alert("حدد رمز الإدارة ADMIN_PIN بأول الملف."); return; }
+  if (prompt("رمز الإدارة") === ADMIN_PIN){ go("adm"); showAdm(); } else alert("الرمز غير صحيح");
+};
+async function showAdm(){
+  const box = $("ab");
+  box.replaceChildren(msg("عم نحمّل..."));
+  let all, paid;
+  try { [all, paid] = await Promise.all([dbList(), getPaid()]); }
+  catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل البيانات.", "err")); return; }
+  const now = Date.now(), out = [];
+  out.push(el("h2", { textContent: `العمال (${all.length})` }));
+  all.forEach(w => {
+    const sub = w.paidUntil > now ? ` · مشترك ${Math.ceil((w.paidUntil - now) / 864e5)} يوم` : "";
+    out.push(el("div", { className: "w", style: "margin-bottom:10px" }, [
+      el("b", { textContent: w.name }),
+      el("div", { className: "m", textContent: `${w.job} · ${w.area} · ضغطات ${w.clicks}${sub}` }),
+      el("div", { className: "m", dir: "ltr", style: "text-align:right", textContent: w.phone }),
+      el("div", { className: "row" }, [
+        el("button", { className: "act" + (w.verified ? " on" : ""), textContent: w.verified ? "موثّق" : "وثّق", onclick: async () => { await dbSet(w.id, { verified: !w.verified }); showAdm(); } }),
+        el("button", { className: "act", textContent: "فعّل 30 يوم", onclick: async () => { await dbSet(w.id, { paidUntil: Math.max(Date.now(), w.paidUntil) + 30 * 864e5 }); showAdm(); } }),
+        el("button", { className: "act del", textContent: "احذف", onclick: async () => { if (confirm("حذف " + w.name + "؟")){ await dbDel(w.id); showAdm(); } } })
+      ])
+    ]));
+  });
+  out.push(el("h2", { textContent: "المناطق المشتركة", style: "margin-top:18px" }));
+  out.push(el("div", { className: "hint", textContent: "المنطقة اللي بتفعّلها بتخفي العمال غير المشتركين فيها. الباقي مجاني." }));
+  const chips = el("div", { className: "chips" });
+  Object.keys(AREAS).forEach(p => AREAS[p].filter(a => a !== "منطقة أخرى").forEach(a => {
+    const b = el("button", { className: "act" + (paid.includes(a) ? " on" : ""), textContent: a });
+    b.onclick = async () => {
+      const i = paid.indexOf(a);
+      if (i < 0) paid.push(a); else paid.splice(i, 1);
+      b.classList.toggle("on", i < 0);
+      try { await setPaid(paid); } catch(e){ alert("ما انحفظ التعديل"); }
+    };
+    chips.append(b);
+  }));
+  out.push(chips);
+  box.replaceChildren(...out);
+}
+</script>
+</body>
+</html>
