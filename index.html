@@ -156,10 +156,25 @@ async function fs(path, method, body, mask){
   return method === "DELETE" ? null : r.json();
 }
 const LIST_FIELDS = ["name","job","province","area","phone","verified","sum","count","clicks","available","paidUntil"];
-async function dbList(){
-  if (!live) return (LS.get("ow") || []).map(norm);
-  const j = await fs("workers?pageSize=300&" + LIST_FIELDS.map(f => "mask.fieldPaths=" + f).join("&"), "GET");
-  return (j.documents || []).map(d => norm({ id: d.name.split("/").pop(), ...dec(d.fields || {}) }));
+async function dbQuery(f, limit, offset){
+  if (!live){
+    const a = (LS.get("ow") || []).map(norm).filter(w => Object.keys(f).every(k => w[k] === f[k]));
+    return a.slice(offset, offset + limit);
+  }
+  const filters = Object.entries(f).map(([k, v]) => ({ fieldFilter: { field: { fieldPath: k }, op: "EQUAL", value: { stringValue: v } } }));
+  const q = { from: [{ collectionId: "workers" }], select: { fields: LIST_FIELDS.map(x => ({ fieldPath: x })) }, limit, offset };
+  if (filters.length === 1) q.where = filters[0];
+  else if (filters.length > 1) q.where = { compositeFilter: { op: "AND", filters } };
+  const r = await fetch(`${BASE}:runQuery?key=${FIREBASE.apiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ structuredQuery: q }) });
+  if (!r.ok) throw new Error(r.status);
+  return (await r.json()).filter(x => x.document).map(x => norm({ id: x.document.name.split("/").pop(), ...dec(x.document.fields || {}) }));
+}
+async function dbGet(id){
+  if (!live) return (LS.get("ow") || []).map(norm).find(w => w.id === id) || null;
+  try {
+    const j = await fs("workers/" + id + "?" + LIST_FIELDS.map(f => "mask.fieldPaths=" + f).join("&"), "GET");
+    return norm({ id, ...dec(j.fields || {}) });
+  } catch(e){ if (String(e.message) === "404") return null; throw e; }
 }
 async function dbPhotos(id){
   try {
@@ -199,7 +214,7 @@ fill($("rj"), JOBS);
 fill($("rp"), Object.keys(AREAS)); areaOpts($("rp"), $("ra"));
 $("fp").onchange = () => { areaOpts($("fp"), $("fa"), "كل المناطق"); search(); };
 $("rp").onchange = () => areaOpts($("rp"), $("ra"));
-$("fj").onchange = $("fa").onchange = search;
+$("fj").onchange = $("fa").onchange = () => search();
 
 let depth = 0;
 function go(id, pop){
@@ -270,19 +285,37 @@ function card(w, full){
 
 /* ===== البحث ===== */
 const FAV = { on: false };
+let SR = { items: [], offset: 0, more: false };
+let PAID = null;
+const paidList = async () => PAID || (PAID = await getPaid());
 $("ff").onclick = () => { FAV.on = !FAV.on; $("ff").textContent = FAV.on ? "كل المعلمين" : "المفضلة فقط"; search(); };
-async function search(){
+function filtersNow(){
+  const f = {};
+  if ($("fj").value) f.job = $("fj").value;
+  if ($("fp").value) f.province = $("fp").value;
+  if ($("fa").value) f.area = $("fa").value;
+  return f;
+}
+function renderResults(){
   const box = $("res");
-  box.replaceChildren(el("div", { className: "empty", textContent: "عم نحمّل..." }));
-  let all, paid;
-  try { [all, paid] = await Promise.all([dbList(), getPaid()]); }
-  catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل القائمة. تأكد من الإنترنت وجرب مرة ثانية.", "err")); return; }
-  const job = $("fj").value, pr = $("fp").value, ar = $("fa").value, favs = LS.get("of") || [], now = Date.now();
-  const hits = all.filter(w => (!job || w.job === job) && (!pr || w.province === pr) && (!ar || w.area === ar)
-      && !(paid.includes(w.area) && w.paidUntil < now) && (!FAV.on || favs.includes(w.id)))
-    .sort((a, b) => (b.verified - a.verified) || (b.available - a.available) || (score(b) - score(a)));
-  if (!hits.length){ box.replaceChildren(el("div", { className: "empty", textContent: "لسا ما في معلمين هون. جرب مهنة أو منطقة ثانية." })); return; }
-  box.replaceChildren(...hits.map(w => card(w, false)));
+  if (!SR.items.length){ box.replaceChildren(el("div", { className: "empty", textContent: "لسا ما في معلمين هون. جرب مهنة أو منطقة ثانية." })); return; }
+  const items = [...SR.items].sort((a, b) => (b.verified - a.verified) || (b.available - a.available) || (score(b) - score(a)));
+  const out = items.map(w => card(w, false));
+  if (SR.more) out.push(el("button", { className: "btn alt", textContent: "عرض المزيد", onclick: () => search(true) }));
+  box.replaceChildren(...out);
+}
+async function search(more){
+  const box = $("res"), PAGE = 20;
+  if (!more){ SR = { items: [], offset: 0, more: false }; box.replaceChildren(el("div", { className: "empty", textContent: "عم نحمّل..." })); }
+  let batch, paid;
+  try {
+    if (FAV.on){ batch = (await Promise.all((LS.get("of") || []).map(dbGet))).filter(Boolean); SR.more = false; }
+    else { batch = await dbQuery(filtersNow(), PAGE, SR.offset); SR.offset += PAGE; SR.more = batch.length === PAGE; }
+    paid = await paidList();
+  } catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل القائمة. تأكد من الإنترنت وجرب مرة ثانية.", "err")); return; }
+  const now = Date.now();
+  SR.items = SR.items.concat(batch.filter(w => !(paid.includes(w.area) && w.paidUntil < now)));
+  renderResults();
 }
 
 /* ===== التسجيل ===== */
@@ -327,7 +360,7 @@ async function showMe(){
   if (!id){ box.replaceChildren(msg("سجّل كعامل أول لتظهر لوحتك هنا.")); return; }
   box.replaceChildren(msg("عم نحمّل..."));
   let w, paid;
-  try { const [all, p] = await Promise.all([dbList(), getPaid()]); w = all.find(x => x.id === id); paid = p; }
+  try { [w, paid] = await Promise.all([dbGet(id), getPaid()]); }
   catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل لوحتك.", "err")); return; }
   if (!w){ LS.set("om", null); box.replaceChildren(msg("ما لقينا حسابك. ممكن انحذف، سجّل من جديد.", "err")); return; }
   const now = Date.now();
