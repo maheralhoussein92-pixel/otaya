@@ -71,7 +71,6 @@ select:focus,input:focus,button:focus-visible,a:focus-visible{outline:2px solid 
   <button class="btn" data-go="find">ابدأ الآن</button>
   <button class="btn alt" data-go="reg">سجّل كعامل</button>
   <button id="bme" class="btn alt" data-go="me" hidden>لوحتي</button>
-  <div class="foot"><button id="badm">إدارة</button></div>
 </section>
 
 <section id="find" class="view">
@@ -112,17 +111,10 @@ select:focus,input:focus,button:focus-visible,a:focus-visible{outline:2px solid 
   <div id="mb"></div>
 </section>
 
-<section id="adm" class="view">
-  <button class="back" data-go="home">رجوع</button>
-  <h2>الإدارة</h2>
-  <div id="ab"></div>
-</section>
-
 </main>
 <script>
 /* الإعدادات: عدّلها قبل ما ترفع الملف */
 const FIREBASE = { projectId: "otaya-690b9", apiKey: "AIzaSyAoWWP6NNwqGlNK9h4Yr2ikk0nhDrHAlXk" };
-const ADMIN_PIN = "";      /* رمز الدخول لشاشة الإدارة */
 const ADMIN_WA = "";       /* رقمك للواتساب بصيغة 9639xxxxxxxx */
 const SHAM_NUMBER = "";    /* رقم حسابك على الشام كاش */
 
@@ -182,18 +174,10 @@ async function dbSet(id, patch){
   if (!live){ const a = LS.get("ow") || []; const x = a.find(w => w.id === id); if (x) Object.assign(x, patch); LS.set("ow", a); return; }
   await fs("workers/" + id, "PATCH", patch, Object.keys(patch));
 }
-async function dbDel(id){
-  if (!live){ LS.set("ow", (LS.get("ow") || []).filter(w => w.id !== id)); return; }
-  await fs("workers/" + id, "DELETE");
-}
 async function getPaid(){
   if (!live) return LS.get("op") || [];
   try { const j = await fs("config/areas", "GET"); return (dec(j.fields || {}).paid || "").split("|").filter(Boolean); }
   catch(e){ return []; }
-}
-async function setPaid(arr){
-  if (!live){ LS.set("op", arr); return; }
-  await fs("config/areas", "PATCH", { paid: arr.join("|") }, ["paid"]);
 }
 
 /* ===== القوائم ===== */
@@ -359,48 +343,6 @@ async function showMe(){
   box.replaceChildren(...out);
 }
 
-/* ===== الإدارة ===== */
-$("badm").onclick = () => {
-  if (!ADMIN_PIN){ alert("حدد رمز الإدارة ADMIN_PIN بأول الملف."); return; }
-  if (prompt("رمز الإدارة") === ADMIN_PIN){ go("adm"); showAdm(); } else alert("الرمز غير صحيح");
-};
-async function showAdm(){
-  const box = $("ab");
-  box.replaceChildren(msg("عم نحمّل..."));
-  let all, paid;
-  try { [all, paid] = await Promise.all([dbList(), getPaid()]); }
-  catch(e){ box.replaceChildren(msg("ما قدرنا نحمّل البيانات.", "err")); return; }
-  const now = Date.now(), out = [];
-  out.push(el("h2", { textContent: `العمال (${all.length})` }));
-  all.forEach(w => {
-    const sub = w.paidUntil > now ? ` · مشترك ${Math.ceil((w.paidUntil - now) / 864e5)} يوم` : "";
-    out.push(el("div", { className: "w", style: "margin-bottom:10px" }, [
-      el("b", { textContent: w.name }),
-      el("div", { className: "m", textContent: `${w.job} · ${w.area} · ضغطات ${w.clicks}${sub}` }),
-      el("div", { className: "m", dir: "ltr", style: "text-align:right", textContent: w.phone }),
-      el("div", { className: "row" }, [
-        el("button", { className: "act" + (w.verified ? " on" : ""), textContent: w.verified ? "موثّق" : "وثّق", onclick: async () => { await dbSet(w.id, { verified: !w.verified }); showAdm(); } }),
-        el("button", { className: "act", textContent: "فعّل 30 يوم", onclick: async () => { await dbSet(w.id, { paidUntil: Math.max(Date.now(), w.paidUntil) + 30 * 864e5 }); showAdm(); } }),
-        el("button", { className: "act del", textContent: "احذف", onclick: async () => { if (confirm("حذف " + w.name + "؟")){ await dbDel(w.id); showAdm(); } } })
-      ])
-    ]));
-  });
-  out.push(el("h2", { textContent: "المناطق المشتركة", style: "margin-top:18px" }));
-  out.push(el("div", { className: "hint", textContent: "المنطقة اللي بتفعّلها بتخفي العمال غير المشتركين فيها. الباقي مجاني." }));
-  const chips = el("div", { className: "chips" });
-  Object.keys(AREAS).forEach(p => AREAS[p].filter(a => a !== "منطقة أخرى").forEach(a => {
-    const b = el("button", { className: "act" + (paid.includes(a) ? " on" : ""), textContent: a });
-    b.onclick = async () => {
-      const i = paid.indexOf(a);
-      if (i < 0) paid.push(a); else paid.splice(i, 1);
-      b.classList.toggle("on", i < 0);
-      try { await setPaid(paid); } catch(e){ alert("ما انحفظ التعديل"); }
-    };
-    chips.append(b);
-  }));
-  out.push(chips);
-  box.replaceChildren(...out);
-}
 </script>
 </body>
 </html>
