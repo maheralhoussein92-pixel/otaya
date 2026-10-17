@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>إحصائيات أوتايا</title>
+<style>
+:root{--bg:#0b1128;--card:#141d40;--line:#26315f;--text:#f2f3f8;--mute:#9aa3c7;--gold:#f5b301;--ok:#2fbf71;--bad:#e5534b;--mid:#e0a030}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;padding:14px;max-width:640px;margin:0 auto;line-height:1.5}
+h1{font-size:22px;color:var(--gold);margin-bottom:4px}
+h2{font-size:17px;margin:22px 0 8px}
+.sub{color:var(--mute);font-size:13px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+.big{font-size:44px;font-weight:700;color:var(--gold);line-height:1.1}
+button{background:var(--gold);color:#0b1128;border:0;border-radius:10px;padding:10px 16px;font-size:15px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5}
+.row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .n{flex:1;font-size:14px}
+.row .c{min-width:28px;text-align:center;font-weight:700}
+.bar{flex:0 0 90px;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%}
+.tag{font-size:12px;padding:2px 8px;border-radius:10px;color:#0b1128;font-weight:700}
+.sum p{margin:4px 0;font-size:14px}
+.err{background:#3a1620;border:1px solid var(--bad);color:#ffd2cf;padding:12px;border-radius:12px}
+.legend{font-size:12px;color:var(--mute);margin-top:8px}
+.dup{font-size:13px;padding:6px 0;border-bottom:1px solid var(--line)}
+.dup:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+<h1>إحصائيات أوتايا</h1>
+<p class="sub">أرقام مجمّعة للعمال المسجّلين. لا تنشر هذا الرابط.</p>
+<button id="rf">تحديث</button>
+<div id="out"></div>
+
+<script>
+const PROJECT = "otaya-690b9";
+const API_KEY = "AIzaSyAoWWP6NNwqGlNK9h4Yr2ikk0nhDrHAlXk";
+const JOBS = ["سباك (صحية)","كهربجي","نجار","نجار موبيلية","نجار باطون","حداد","بلاط","ملاس (قصارة)","طيان","معمرجي","دهّان","جبّاس (ديكور جبصين)","عازل (عزل أسطح ومياه)","عامل ألمنيوم وزجاج","مصلح غسالات","مصلح برادات","مصلح مكيفات","مصلح سخانات وغاز","مصلح مدافئ","فني ستلايت وانترنت","فني كمبيوتر وموبايل","منجّد","فني ستائر","فني أقفال ومفاتيح","فني تركيب مطابخ","نقل وتنزيل عفش وأثاث","عامل تنظيف منازل","عاملة تنظيف منازل","ميكانيكي سيارات","كهربجي سيارات","مهنة أخرى"];
+const FIELDS = ["name","job","province","area","phone"];
+const URL_Q = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents:runQuery?key=${API_KEY}`;
+
+const $ = id => document.getElementById(id);
+const el = (t, p = {}, k = []) => { const e = document.createElement(t); Object.assign(e, p); k.forEach(x => e.append(x)); return e; };
+const digits = s => String(s || "").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/\D/g, "");
+const normPhone = p => { p = digits(p); if (p.startsWith("00")) p = p.slice(2); if (p.startsWith("963")) p = "0" + p.slice(3); return p; };
+const str = f => f && "stringValue" in f ? f.stringValue : "";
+const color = n => n === 0 ? "var(--bad)" : n < 5 ? "var(--mid)" : "var(--ok)";
+const label = n => n === 0 ? "فاضية" : n < 5 ? "ضعيفة" : "تمام";
+
+async function load(){
+  const body = { structuredQuery: { from: [{ collectionId: "workers" }], select: { fields: FIELDS.map(f => ({ fieldPath: f })) } } };
+  const r = await fetch(URL_Q, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const data = await r.json();
+  return data.filter(x => x.document).map(x => {
+    const f = x.document.fields || {};
+    return { name: str(f.name), job: str(f.job), province: str(f.province), area: str(f.area), phone: str(f.phone) };
+  });
+}
+
+function countBy(list, key){
+  const m = new Map();
+  list.forEach(w => { const k = w[key] || "غير محدد"; m.set(k, (m.get(k) || 0) + 1); });
+  return m;
+}
+
+function rowsCard(entries, max, withTag){
+  const c = el("div", { className: "card" });
+  entries.forEach(([name, n]) => {
+    const row = el("div", { className: "row" });
+    row.append(el("span", { className: "n", textContent: name }));
+    const bar = el("span", { className: "bar" }, [el("i")]);
+    bar.firstChild.style.width = Math.max(2, Math.round(n / max * 100)) + "%";
+    bar.firstChild.style.background = withTag ? color(n) : "var(--gold)";
+    row.append(bar);
+    row.append(el("span", { className: "c", textContent: String(n) }));
+    if (withTag){ const t = el("span", { className: "tag", textContent: label(n) }); t.style.background = color(n); row.append(t); }
+    c.append(row);
+  });
+  return c;
+}
+
+function render(list){
+  const out = $("out");
+  out.replaceChildren();
+  const total = list.length;
+
+  const tc = el("div", { className: "card" });
+  tc.append(el("div", { className: "big", textContent: String(total) }), el("div", { className: "sub", textContent: "عامل وعاملة مسجّلين" }));
+  out.append(tc);
+
+  const jm = countBy(list, "job");
+  JOBS.forEach(j => { if (!jm.has(j)) jm.set(j, 0); });
+  const jobs = [...jm.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0], "ar"));
+  const empty = jobs.filter(x => x[1] === 0).map(x => x[0]);
+  const weak = jobs.filter(x => x[1] > 0 && x[1] < 5).map(x => x[0] + " (" + jm.get(x[0]) + ")");
+  const most = [...jobs].sort((a, b) => b[1] - a[1])[0];
+
+  const sm = el("div", { className: "card sum" });
+  sm.append(el("p", { textContent: "أكتر مهنة: " + most[0] + " (" + most[1] + ")" }));
+  sm.append(el("p", { textContent: "مهن فاضية: " + (empty.length ? empty.join("، ") : "ما في") }));
+  sm.append(el("p", { textContent: "مهن ضعيفة (أقل من 5): " + (weak.length ? weak.join("، ") : "ما في") }));
+  out.append(sm);
+
+  out.append(el("h2", { textContent: "حسب المهنة (من الأقل للأكثر)" }));
+  out.append(rowsCard(jobs, Math.max(1, most[1]), true));
+  out.append(el("div", { className: "legend", textContent: "أحمر = فاضية، برتقالي = 1-4، أخضر = 5 أو أكتر" }));
+
+  const am = [...countBy(list, "area").entries()].sort((a, b) => b[1] - a[1]);
+  out.append(el("h2", { textContent: "حسب المنطقة" }));
+  out.append(rowsCard(am, Math.max(1, am[0] ? am[0][1] : 1), false));
+
+  const byPhone = new Map();
+  list.forEach(w => { const p = normPhone(w.phone); if (p) { if (!byPhone.has(p)) byPhone.set(p, []); byPhone.get(p).push(w); } });
+  const dups = [...byPhone.entries()].filter(([, a]) => a.length > 1);
+  out.append(el("h2", { textContent: "أرقام مكرّرة: " + dups.length }));
+  const dc = el("div", { className: "card" });
+  if (!dups.length) dc.append(el("div", { textContent: "ما في تكرار. 👍" }));
+  dups.forEach(([p, a]) => {
+    dc.append(el("div", { className: "dup", textContent: "رقم ينتهي بـ " + p.slice(-3) + " | " + a.length + " مرات | " + a.map(w => (w.name || "؟") + " - " + w.job).join(" / ") }));
+  });
+  out.append(dc);
+  if (dups.length) out.append(el("div", { className: "legend", textContent: "للحذف: Firebase Console، ثم Firestore، ثم العمال، واحذف الوثيقة المكرّرة (🗑️) وخلّي واحدة." }));
+
+  out.append(el("div", { className: "legend", textContent: "آخر تحديث: " + new Date().toLocaleTimeString("ar") + " | كل تحديث بيقرأ " + total + " وثيقة من حدّك المجاني." }));
+}
+
+async function run(){
+  const b = $("rf"); b.disabled = true; b.textContent = "عم نحمّل...";
+  try { render(await load()); }
+  catch(e){ $("out").replaceChildren(el("div", { className: "err", textContent: "ما قدرنا نحمّل الأرقام (" + e.message + "). تأكد من الإنترنت وجرّب تاني." })); }
+  b.disabled = false; b.textContent = "تحديث";
+}
+$("rf").onclick = run;
+run();
+</script>
+</body>
+</html>
