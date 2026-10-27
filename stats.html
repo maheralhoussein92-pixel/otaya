@@ -40,7 +40,7 @@ button:disabled{opacity:.5}
 const PROJECT = "otaya-690b9";
 const API_KEY = "AIzaSyAoWWP6NNwqGlNK9h4Yr2ikk0nhDrHAlXk";
 const JOBS = ["سباك (صحية)","كهربجي","نجار","نجار موبيلية","نجار باطون","حداد","بلاط","ملاس (قصارة)","طيان","معمرجي","دهّان","جبّاس (ديكور جبصين)","عازل (عزل أسطح ومياه)","عامل ألمنيوم وزجاج","مصلح غسالات","مصلح برادات","مصلح مكيفات","مصلح سخانات وغاز","مصلح مدافئ","فني ستلايت وانترنت","فني كمبيوتر وموبايل","منجّد","فني ستائر","فني أقفال ومفاتيح","فني تركيب مطابخ","نقل وتنزيل عفش وأثاث","عامل تنظيف منازل","عاملة تنظيف منازل","ميكانيكي سيارات","كهربجي سيارات","مهنة أخرى"];
-const FIELDS = ["name","job","province","area","phone"];
+const FIELDS = ["name","job","province","area","phone","clicks"];
 const URL_Q = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents:runQuery?key=${API_KEY}`;
 
 const $ = id => document.getElementById(id);
@@ -58,7 +58,8 @@ async function load(){
   const data = await r.json();
   return data.filter(x => x.document).map(x => {
     const f = x.document.fields || {};
-    return { name: str(f.name), job: str(f.job), province: str(f.province), area: str(f.area), phone: str(f.phone) };
+    const ck = f.clicks ? Number(f.clicks.integerValue || f.clicks.doubleValue || 0) : 0;
+    return { name: str(f.name), job: str(f.job), province: str(f.province), area: str(f.area), phone: str(f.phone), clicks: ck };
   });
 }
 
@@ -92,6 +93,17 @@ function render(list){
   const tc = el("div", { className: "card" });
   tc.append(el("div", { className: "big", textContent: String(total) }), el("div", { className: "sub", textContent: "عامل وعاملة مسجّلين" }));
   out.append(tc);
+
+  const totalClicks = list.reduce((s, w) => s + (w.clicks || 0), 0);
+  let prev = null;
+  try { const v = localStorage.getItem("otaya_clicks"); if (v !== null) prev = Number(v); localStorage.setItem("otaya_clicks", String(totalClicks)); } catch (e) {}
+  const cc = el("div", { className: "card" });
+  cc.append(el("div", { className: "big", textContent: String(totalClicks) }), el("div", { className: "sub", textContent: "ضغطة اتصال أو واتساب من الزبائن (من البداية)" }));
+  if (prev !== null) cc.append(el("div", { className: "sub", textContent: "الجديد من آخر مرة فتحت فيها الصفحة: " + Math.max(0, totalClicks - prev) }));
+  const cj = new Map();
+  list.forEach(w => { if (w.clicks) cj.set(w.job || "غير محدد", (cj.get(w.job || "غير محدد") || 0) + w.clicks); });
+  [...cj.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).forEach(([j, n]) => cc.append(el("div", { className: "dup", textContent: j + ": " + n })));
+  out.append(cc);
 
   const jm = countBy(list, "job");
   JOBS.forEach(j => { if (!jm.has(j)) jm.set(j, 0); });
